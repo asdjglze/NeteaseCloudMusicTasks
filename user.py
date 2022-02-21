@@ -43,7 +43,7 @@ class User(object):
             self.title += ': 请填写账号密码'
             self.taskTitle('用户信息')
             self.taskInfo('登录失败，请填写账号密码')
-            return
+            raise Exception('请填写账号密码')
         self.music = self.login_check(user_config['username'], user_config['password'], user_config.get(
             'countrycode', ''), user_config['X-Real-IP'])
         if self.music.uid != 0:
@@ -66,7 +66,7 @@ class User(object):
         if len(ip) > 0:
             music.header["X-Real-IP"] = ip
         if self.runtime == 'tencent-scf':
-            var_name = 'COOKIE_' + username
+            var_name = 'COOKIE_' + re.sub('[^a-zA-Z0-9]', '_', username)
             if var_name in os.environ:
                 sp = os.environ.get(var_name).split(";")
                 cookies = {}
@@ -109,7 +109,7 @@ class User(object):
                         elif cookie.name == '__csrf':
                             music_cookie += '__csrf:' + cookie.value + ';'
 
-                    self.saved_environs['COOKIE_' + username] = music_cookie
+                    self.saved_environs['COOKIE_' + re.sub('[^a-zA-Z0-9]', '_', username)] = music_cookie
 
                 music.uid = login_resp['profile']['userId']
                 music.nickname = login_resp['profile']['nickname']
@@ -757,11 +757,11 @@ class User(object):
         count = 0
         for item in items:
             desp = item['action']
-            basicTaskId = str(item['basicTaskId'])
-            if item['status'] == 0 and basicTaskId in tasks and tasks[basicTaskId]['enable']:
-                exec('from task import {}'.format(tasks[basicTaskId]['module']))
-                exec('{}.start(self, tasks[taskId])'.format(
-                    tasks[basicTaskId]['module']))
+            actionType = str(item['actionType'])
+            if item['status'] == 0 and actionType in tasks and tasks[actionType]['enable']:
+                exec('from task import {}'.format(tasks[actionType]['module']))
+                exec('{}.start(self, tasks[actionType])'.format(
+                    tasks[actionType]['module']))
                 count += 1
 
         if count > 0:

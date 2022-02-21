@@ -1,5 +1,5 @@
 {
-    "version": "2.10",
+    "version": "2.14",
     "users": [
         {
             /* 填写手机号或邮箱 */
@@ -8,9 +8,8 @@
             "countrycode": "",
             /* 填写密码或 32 位 md5 加密后的密码 */
             "password": "",
-            /* 填写任意国内IP，否则可能会有无法登录等问题出现，多个账号最好设置不同的IP */
-            /* 如果是在本地环境运行，则不需要填写 */
-            /* 可填写本机IP，查看方法为：百度搜索ip，填写显示的ip即可 */
+            /* 填写国内IP，否则可能会有无法登录等问题出现，多个账号最好设置不同的IP */
+            /* 可填写本机IP，查看方法：https://www.ip138.com/ 填写显示的ip即可 */
             "X-Real-IP": "",
             /* 是否运行该账号的任务 */
             "enable": true
@@ -37,7 +36,7 @@
                 /* 是否将多个账号的信息合并推送 */
                 "merge": true
             },
-            /* 官网 http://www.pushplus.plus */
+            /* 官网 https://www.pushplus.plus */
             "pushPlus": {
                 "module": "pushPlus",
                 /* 是否启用pushplus微信推送 */
@@ -90,6 +89,18 @@
                 "botToken": "",
                 /* 是否将多个账号的信息合并推送 */
                 "merge": true
+            },
+            "Bark": {
+                /* 项目地址： https://github.com/Finb/Bark */
+                "module": "Bark",
+                /* 是否启用Bark推送 */
+                "enable": false,
+                /* Bark的地址 */
+                "Bark_url": "",
+                /* Bark的API key */
+                "Bark_key": "",
+                /* 是否将多个账号的信息合并推送, 建议为false，iOS推送消息过长可能会失败 */
+                "merge": false
             }
         },
         /* 签到 */
@@ -226,7 +237,7 @@
         },
         /* VIP 成长值任务 */
         "vip_task": {
-            "709004": {
+            "816": {
                 "taskName": "创建共享歌单",
                 "module": "createSharedPlaylist",
                 "enable": false,
