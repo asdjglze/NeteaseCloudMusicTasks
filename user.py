@@ -17,6 +17,7 @@ class User(object):
         self.isLogined = False
         self.nickname = ''
         self.uid = 0
+        self.artistId = 0
         self.userType = 0
         self.level = 0
         self.full = False
@@ -84,6 +85,8 @@ class User(object):
             print('已通过 cookie 登录')
             music.uid = resp['data']['userId']
             user_resp = music.user_detail(music.uid)
+            if 'artistId' in user_resp['profile']:
+                self.artistId = user_resp['profile']['artistId']
             self.listenSongs = user_resp['listenSongs']
             music.nickname = user_resp['profile']['nickname']
             music.userType = user_resp['profile']['userType']
@@ -114,6 +117,8 @@ class User(object):
                 music.uid = login_resp['profile']['userId']
                 music.nickname = login_resp['profile']['nickname']
                 music.userType = login_resp['profile']['userType']
+                if 'artistId' in login_resp['profile']:
+                    self.artistId = login_resp['profile']['artistId']
                 music.loginerror = ''
                 if music.userType != 0 and music.userType != 4:
                     user_resp = music.user_detail(music.uid)
@@ -153,6 +158,8 @@ class User(object):
 
     def userInfo(self):
         resp = self.music.user_detail(self.uid)
+        if 'artistId' in resp['profile']:
+            self.artistId = resp['profile']['artistId']
         self.level = resp['level']
         self.vipType = resp['profile']['vipType']
         self.listenSongs = resp['listenSongs']
@@ -164,9 +171,10 @@ class User(object):
 
         if self.vipType == 11:
             vip_resp = self.music.vip_level()
-            self.taskInfo('VIP等级', vip_resp['data']['redVipLevel'])
-            self.taskInfo('到期时间', time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(vip_resp['data']['musicPackage']['expireTime']/1000)))
+            if 'data' in vip_resp:
+                self.taskInfo('VIP等级', vip_resp['data']['redVipLevel'])
+                self.taskInfo('到期时间', time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(vip_resp['data']['musicPackage']['expireTime']/1000)))
 
         self.taskInfo('云贝数量', resp['userPoint']['balance'])
 
@@ -182,14 +190,21 @@ class User(object):
         self.taskInfo('歌单总收藏数', resp['profile']['playlistBeSubscribedCount'])
 
         resp = self.music.user_level()
-        self.full = resp['full']
-        if not self.full:
-            self.taskInfo('距离下级还需播放', str(
-                resp['data']['nextPlayCount'] - resp['data']['nowPlayCount']) + '首歌')
-            self.taskInfo('距离下级还需登录', str(
-                resp['data']['nextLoginCount'] - resp['data']['nowLoginCount']) + '天')
-            if resp['data']['nowPlayCount'] >= 20000:
-                self.songFull = True
+        if 'full' in resp:
+            self.full = resp['full']
+        else:
+            if 'data' in resp and 'level' in resp['data']:
+                self.full = (resp['data']['level'] == 10)
+            else:
+                print('获取用户等级失败:' + str(resp))
+        if 'data' in resp:
+            if not self.full:
+                self.taskInfo('距离下级还需播放', str(
+                    resp['data']['nextPlayCount'] - resp['data']['nowPlayCount']) + '首歌')
+                self.taskInfo('距离下级还需登录', str(
+                    resp['data']['nextLoginCount'] - resp['data']['nowLoginCount']) + '天')
+                if resp['data']['nowPlayCount'] >= 20000:
+                    self.songFull = True
         self.finishTask()
 
     def resize(self, total):
@@ -591,7 +606,10 @@ class User(object):
             for mission in mission_list:
                 missionId = str(mission['missionId'])
                 if mission['status'] == 0 and missionId in tasks:
-                    self.taskInfo(mission['description'], '未完成')
+                    if tasks[missionId]['enable']:
+                        self.taskInfo(mission['description'], '未完成')
+                    else:
+                        self.taskInfo(mission['description'], '未开启任务')
                 elif mission['status'] == 10:
                     self.taskInfo(mission['description'], '进行中' + '(' + str(
                         mission['progressRate']) + '/' + str(mission['targetCount']) + ')')
