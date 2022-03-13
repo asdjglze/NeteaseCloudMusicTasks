@@ -250,6 +250,11 @@ REGION 默认为 `ap-guangzhou` ，可选的地域详见[地域列表](https://c
             "taskName": "分享歌曲/歌单",
             "module": "share",
             "enable": false
+        },
+        "656007": {
+            "taskName": "浏览会员中心",
+            "module": "visitVipCenter",
+            "enable": false
         }
     },
     // ...
@@ -265,6 +270,8 @@ REGION 默认为 `ap-guangzhou` ，可选的地域详见[地域列表](https://c
 `发布Mlog` 根据填写的歌曲 ID，自动下载歌曲对应的专辑图片，并上传。`songId` 填写歌曲 id，如`[65528, 64634]`，`text` 填写动态内容
 
 `分享歌曲/歌单`任务并不会真的分享，将 `enable` 设为 `true` 即可开启任务
+
+`浏览会员中心`将 `enable` 设为 `true` 即可开启任务
 
 #### 音乐人任务
 
@@ -321,7 +328,23 @@ REGION 默认为 `ap-guangzhou` ，可选的地域详见[地域列表](https://c
             "taskName": "访问自己的云圈",
             "module": "visitMyCircle",
             "enable": false
-        }
+        },
+        "744005": {
+            "taskName": "发布mlog",
+            "module": "publishMlog",
+            "enable": false,
+            // 填写歌曲ID
+            "songId": [],
+            /* 动态内容，随机选取一个，其中$artist会被替换为歌手名，$song会被替换为歌曲名 */
+            "text": [
+                "分享$artist的歌曲: $song",
+                "分享歌曲: $song"
+            ],
+            /* 图片大小，越大则消耗的外网出流量越多 */
+            "size": 500,
+            /* 发布成功后是否自动删除该动态 */
+            "delete": true
+        },
     },
     // ...
 }
@@ -586,7 +609,7 @@ REGION 默认为 `ap-guangzhou` ，可选的地域详见[地域列表](https://c
 ### 拉取仓库
 
 ```shell
-ql repo https://github.com/chen310/NeteaseCloudMusicTasks.git "index.py" "" "py" && task /ql/scripts/chen310_NeteaseCloudMusicTasks/ql_update.py
+ql repo https://github.com/chen310/NeteaseCloudMusicTasks.git "index.py" "" "py" && task chen310_NeteaseCloudMusicTasks/ql_update.py
 ```
 
 第一次使用需要安装依赖，时间可能会长一些
@@ -601,11 +624,21 @@ ql repo https://github.com/chen310/NeteaseCloudMusicTasks.git "index.py" "" "py"
 
 ### 下载
 
+拉取代码
+
 ```shell
 git clone https://github.com/chen310/NeteaseCloudMusicTasks.git
 ```
 
 ### 安装依赖
+
+切换到项目目录
+
+```shell
+cd NeteaseCloudMusicTasks
+```
+
+然后安装依赖
 
 ```shell
 pip install -r requirements.txt
@@ -613,12 +646,32 @@ pip install -r requirements.txt
 
 ### 修改配置文件
 
-对配置文件 `config.json` 进行修改
+首先将 `config.example.json` 文件复制为 `config.json` 文件
+
+```shell
+cp config.example.json config.json
+```
+
+然后对配置文件 `config.json` 进行修改。
 
 ### 运行
 
 ```shell
-python index.py
+python3 index.py
+```
+
+### 更新代码
+
+首先更新代码
+
+```shell
+git pull
+```
+
+然后更新配置文件
+
+```shell
+python3 ./updateconfig.py config.example.json config.json config.json
 ```
 
 ## 四、使用`docker`部署
@@ -630,7 +683,7 @@ python index.py
 ### 下载并配置 `config.json`
 
 ```shell
-curl -fsSL -o config.json https://raw.githubusercontent.com/chen310/NeteaseCloudMusicTasks/main/config.json
+curl -fsSL -o config.json https://raw.githubusercontent.com/chen310/NeteaseCloudMusicTasks/main/config.example.json
 ```
 
 ### 随机时间执行
