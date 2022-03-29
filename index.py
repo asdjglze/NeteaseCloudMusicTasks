@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+cron: 35 8 * * *
+new Env('网易云音乐自动任务');
+"""
 from utils import updateConfig
 import time
 import requests
@@ -16,18 +20,12 @@ runtime = 'tencent-scf'
 
 
 def md2text(data):
-    data = re.sub(r'\n\n', r'\n', data)
     data = re.sub(r'\[(.*?)\]\((.*?)\)', r'\1: \2 ', data)
-    data = re.sub(r'\t', r'  ➢ ', data)
-    data = re.sub(r'\*\*(.*?)\*\*\n', r'【\1】\n', data)
+    data = re.sub(r'- ', r'   •', data)
+    data = re.sub(r'#### (.*?)\n', r'【\1】\n\n', data)
     data = re.sub(r'### ', r'\n', data)
-    data = re.sub(r'`', r'', data)
     return data
 
-def md2fullMd(data):
-    data = re.sub(r'\*\*(.*?)\*\*\n', r'#### \1\n', data)
-    data = re.sub(r'\t', r'- ', data)
-    return data
 
 def getSongNumber():
     res = {}
@@ -54,7 +52,8 @@ def start(event={}, context={}):
         config = json5.load(f)
 
     print('Version:', config['version'])
-    print('Commit ID:', config['sha'])
+    if 'sha' in config:
+        print('Commit ID:', config['sha'])
 
     # 公共配置
     setting = config['setting']
@@ -84,8 +83,7 @@ def start(event={}, context={}):
                 continue
             data = {
                 'title': user.title,
-                'mdmsg': md2fullMd(user.msg),
-                'mdmsg_compat': user.msg,
+                'mdmsg': user.msg,
                 'textmsg': md2text(user.msg),
                 'config': push
             }
@@ -104,10 +102,9 @@ def setSongNumber():
     with open('config.json', 'r', encoding='utf-8') as f:
         config = json5.load(f)
     setting = config['setting']
-    lastSongNumber = os.environ.get("SONG_NUMBER", "-1")
     songNumber = ""
     timer_enable = False
-    time.sleep(random.randint(10, 50))
+    time.sleep(random.randint(5, 20))
     for user_config in config['users']:
         if not user_config['enable']:
             continue
@@ -136,9 +133,8 @@ def setSongNumber():
     if not timer_enable:
         # TODO
         pass
-    if len(songNumber) == 0:
-        songNumber = "-1"
-    if lastSongNumber == "-1" and songNumber == "-1":
+    if not songNumber:
+        print('未更新歌曲播放数量')
         return
     songNumber = time.strftime(
         "%Y-%m-%d", time.gmtime(time.time()+28800)) + "#" + songNumber
@@ -147,7 +143,7 @@ def setSongNumber():
     if res:
         print("已更新歌曲播放数量")
     else:
-        print("播放量更新失败")
+        print("歌曲播放数量更新失败")
 
 
 def main_handler(event, context):

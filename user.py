@@ -175,19 +175,16 @@ class User(object):
         return music
 
     def taskTitle(self, title):
-        msg = '**{}**\n'.format(title)
-        self.msg += msg + '\n'
-        print(msg)
-    def taskInfo(self, key, value='', useCodeblock = True):
+        self.msg += '#### ' + title + '\n'
+        print('#### ' + title)
+
+    def taskInfo(self, key, value=''):
         if value == '':
-            msg = f"\t{str(key)}"
-        elif useCodeblock:
-            # Use `codeblock` to prevent markdown 's keywords containing in value which leads to 400 Bad Request
-            msg = f"\t{str(key)}: `{str(value)}`"
+            self.msg += '- ' + str(key) + '\n'
+            print('- ' + str(key))
         else:
-            msg = f"\t{str(key)}: {str(value)}"
-        self.msg += msg + '\n'
-        print(msg)
+            self.msg += '- ' + str(key) + ': ' + str(value) + '\n'
+            print('- ' + str(key) + ': ' + str(value))
 
 
     def finishTask(self):
@@ -330,7 +327,7 @@ class User(object):
                 self.taskInfo('听歌总数', str(resp['listenSongs']) + '首')
                 if resp['listenSongs'] - self.songnumber < 300:
                     self.taskInfo(
-                        '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')', useCodeblock=False)
+                        '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')')
                 return
             else:
                 total = 300 - (resp['listenSongs'] - self.songnumber)
@@ -351,7 +348,7 @@ class User(object):
         self.taskInfo('听歌总数', str(resp['listenSongs']) + '首')
         if resp['listenSongs'] - self.songnumber < 300:
             self.taskInfo(
-                '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')', useCodeblock=False)
+                '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')')
         self.finishTask()
 
     def daka(self):
@@ -415,7 +412,7 @@ class User(object):
                 self.taskInfo('听歌总数', str(resp['listenSongs']) + '首')
                 if resp['listenSongs'] - self.listenSongs < 300:
                     self.taskInfo(
-                        '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')', useCodeblock=False)
+                        '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')')
                 return
 
         time.sleep(user_setting['daka']['sleep_time'] + 5)
@@ -428,7 +425,7 @@ class User(object):
         self.taskInfo('听歌总数', str(resp['listenSongs']) + '首')
         if resp['listenSongs'] - self.listenSongs < 300:
             self.taskInfo(
-                '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')', useCodeblock=False)
+                '温馨提示', '数据更新可能有延时，[点击查看最新数据](https://music.163.com/#/user/home?id='+str(self.uid)+')')
         self.finishTask()
 
     def play_playlists(self):
@@ -530,7 +527,7 @@ class User(object):
                 self.taskInfo('感谢关注', author_nickname)
                 # self.taskInfo('如果不想关注，请在配置文件里修改，并在官方客户端里取消关注')
                 self.taskInfo(
-                    '如果不想关注，请在配置文件里修改，并在[主页](https://music.163.com/#/user/home?id='+str(author_uid)+')里取消关注', useCodeblock=False)
+                    '如果不想关注，请在配置文件里修改，并在[主页](https://music.163.com/#/user/home?id='+str(author_uid)+')里取消关注')
                 self.finishTask()
 
     def sign(self):
@@ -578,12 +575,20 @@ class User(object):
 
     def get_missions(self):
         cycle_result = self.music.mission_cycle_get()
+        if cycle_result['code'] != 200:
+            time.sleep(0.2)
+            cycle_result = self.music.mission_cycle_get()
         time.sleep(0.5)
         stage_result = self.music.mission_stage_get()
+        if stage_result['code'] != 200:
+            time.sleep(0.2)
+            stage_result = self.music.mission_stage_get()
 
         missions = []
         if cycle_result['code'] == 200:
             missions.extend(cycle_result.get('data', {}).get('list', []))
+        else:
+            print('每日任务获取失败:', self.errMsg(cycle_result))
         if stage_result['code'] == 200:
             for mission in stage_result['data']['list']:
                 for target in  mission['userStageTargetList']:
@@ -595,7 +600,8 @@ class User(object):
                     if 'userMissionId' in target:
                         m['userMissionId'] = target['userMissionId']
                     missions.append(m)
-
+        else:
+            print('每周任务获取失败:', self.errMsg(stage_result))
         return missions
 
     def musician_task(self):
